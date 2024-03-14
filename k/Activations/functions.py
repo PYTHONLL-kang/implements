@@ -36,7 +36,7 @@ class Softmax:
 
 class Tanh:
     def forward(self, data):
-        return tf.math.exp(data) - tf.math.exp(-data) / tf.math.exp(data) + tf.math.exp(-data)
+        return tf.math.subtract(tf.math.exp(data), tf.math.exp(-data)) / tf.math.add(tf.math.exp(data), tf.math.exp(-data))
 
     def backward(self, gradients, inputs, outputs):
         activation_gradients = 1 - tf.math.pow(outputs, 2)
