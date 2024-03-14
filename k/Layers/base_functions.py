@@ -1,18 +1,22 @@
 import tensorflow as tf
 import numpy as np
+import copy
 import k.Initializers.functions as initializers
 
 class Base:
     def __init__(self, **kwargs):
         self.initializer = kwargs.get('initializer', 'he')
         self.dropout_rate = kwargs.get('dropout', 0.0)
+        self.use_bias = kwargs.get('use_bias', True)
 
     def set_vars(self, optimizer):
         weight_stddev = initializers.function(self.initializer, self.weight_shape)
         self.weight = tf.Variable(tf.random.normal(shape=self.weight_shape, mean=0, stddev=weight_stddev, dtype=tf.float32))
-        self.bias = tf.Variable(tf.random.normal(shape=(1, self.weight_shape[-1]), mean=0, stddev=0.01, dtype=tf.float32))
+        self.weight_optimizer = copy.deepcopy(optimizer)
 
-        self.optimizer = optimizer
+        if self.use_bias:
+            self.bias = tf.Variable(tf.random.normal(shape=(1, self.weight_shape[-1]), mean=0, stddev=0.01, dtype=tf.float32))
+            self.bias_optimizer = copy.deepcopy(optimizer)
 
     def process_gradients(self, gradients):
         flat_gradients = np.reshape(gradients, (-1))
