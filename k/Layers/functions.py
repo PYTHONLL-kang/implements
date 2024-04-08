@@ -67,7 +67,7 @@ class Convolution2D(Layers.Base, Layers.Image):
         self.weight.assign(self.weight_optimizer.update(self.weight, weight_gradients))
 
         if self.use_bias:
-            bias_gradients = tf.math.reduce_sum(gradients, axis=0, keepdims=True)
+            bias_gradients = tf.math.reduce_sum(col_gradients, axis=0, keepdims=True)
             self.bias.assign(self.bias_optimizer.update(self.bias, bias_gradients))
 
         col_weight_gradients = tf.matmul(col_gradients, tf.transpose(self.col_weight))
@@ -85,19 +85,20 @@ class Pooling2D(Layers.Image):
         super().__init__(**kwargs)
 
     def set_shape(self):
-        h, w, _, __ = self.set_imgshape(self.input_shape[1], self.input_shape[2])
-        self.output_shape = [h, w, input_shape[-1]]
+        h, w, _, __ = self.set_imgshape(self.input_shape[0], self.input_shape[1])
+        self.output_shape = [h, w, self.input_shape[-1]]
 
     def forward(self, data):
         self.col, num, out_h, out_w = self.im2col(data)
-        
+        self.col = tf.reshape(self.col, (num*out_h*out_w*data.shape[-1], -1))
+
         if self.pool_type == 'max':
-            pooling_col = tf.math.reduce_max(self.col, axis=0, keepdims=True)
+            pooling_col = tf.math.reduce_max(self.col, axis=1, keepdims=True)
 
         if self.pool_type == 'mean':
-            pooling_col = tf.math.reduce_mean(self.col, axis=0, keepdims=True)
+            pooling_col = tf.math.reduce_mean(self.col, axis=1, keepdims=True)
 
-        pooling_data = tf.reshape(pooling_col, (num, self.kernel_shape[0], self.kernel_shape[1], data.shape[-1]))
+        pooling_data = tf.reshape(pooling_col, (num, out_h, out_w, data.shape[-1]))
 
         return pooling_data
 
@@ -107,17 +108,18 @@ class Pooling2D(Layers.Image):
         col_layer_gradients = tf.zeros((tf.size(layer_gradients), self.pool_size))
 
         if self.pool_type == 'max':
-            index = tf.reshape(tf.argmax(self.col, axis=0), (-1))
-            col_layer_gradients = tf.tensor_scatter_nd_update(col_layer_gradients, tf.expand_dims(tf.range(self.pool_size), axis=1), tf.reshape(layer_gradients, (-1)))
+            argmax_index = tf.reshape(tf.argmax(self.col, axis=1), (-1))
+            index = tf.Variable([tf.range(argmax_index.shape[0], dtype=tf.int64), argmax_index])
+            col_layer_gradients = tf.tensor_scatter_nd_update(col_layer_gradients, tf.transpose(index), tf.reshape(layer_gradients, (-1)))
 
         if self.pool_type == 'mean':
-            col_layer_gradients.fill(tf.reduce_mean(layer_gradients))
-            col_layer_gradients = tf.broadcast_to(col_layer_gradients, layer_gradients.shape + (self.pool_size,))
+            col_layer_gradients = tf.fill(col_layer_gradients.shape, tf.reduce_mean(layer_gradients))
+            col_layer_gradients = tf.reshape(col_layer_gradients, (layer_gradients.shape + (self.pool_size,)))
 
         col_layer_gradients = tf.reshape(col_layer_gradients, (layer_gradients.shape + (self.pool_size,)))
         col_gradients = tf.reshape(col_layer_gradients, (layer_gradients.shape[0]*layer_gradients.shape[1]*layer_gradients.shape[2], -1))
 
-        return self.col2im(col_gradients, inputs)
+        return tf.cast(self.col2im(col_gradients, inputs), dtype=tf.float32)
 
 class Flatten:
     def __init__(self):

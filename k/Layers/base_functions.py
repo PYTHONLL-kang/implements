@@ -1,7 +1,7 @@
 import tensorflow as tf
 import numpy as np
 import copy
-import k.Initializers.functions as initializers
+import k.Initializers.functions as Initializers
 
 class Base:
     def __init__(self, **kwargs):
@@ -10,7 +10,7 @@ class Base:
         self.use_bias = kwargs.get('use_bias', True)
 
     def set_vars(self, optimizer):
-        weight_stddev = initializers.function(self.initializer, self.weight_shape)
+        weight_stddev = Initializers.function(self.initializer, self.weight_shape)
         self.weight = tf.Variable(tf.random.normal(shape=self.weight_shape, mean=0, stddev=weight_stddev, dtype=tf.float32))
         self.weight_optimizer = copy.deepcopy(optimizer)
 
@@ -53,8 +53,8 @@ class Image:
     def set_imgshape(self, height, width):
         out_h = (height + 2 * self.pad[0] - self.kernel_shape[0]) // self.strides[0] + 1
         out_w = (width + 2 * self.pad[1] - self.kernel_shape[1]) // self.strides[1] + 1
-        img_h = height + 2 * self.pad[0] + self.strides[0] - 1
-        img_w = width + 2 * self.pad[1] + self.strides[1] - 1
+        img_h = height + 2 * self.pad[0] + self.strides[0] -1
+        img_w = width + 2 * self.pad[1] + self.strides[1] -1
 
         return out_h, out_w, img_h, img_w
 
@@ -79,10 +79,11 @@ class Image:
         col = tf.transpose(tf.reshape(col, (num, out_h, out_w, channel, self.kernel_shape[0], self.kernel_shape[1])), (0, 3, 4, 5, 1, 2))
 
         img = np.zeros((num, channel, img_h, img_w))
+
         for y in range(self.kernel_shape[0]):
             y_max = y + self.strides[0] * out_h
             for x in range(self.kernel_shape[1]):
                 x_max = x + self.strides[1] * out_w
                 img[:, :, y:y_max:self.strides[0], x:x_max:self.strides[1]] = col[:, :, y, x, :, :]
-        
+
         return img.transpose(0, 2, 3, 1)
