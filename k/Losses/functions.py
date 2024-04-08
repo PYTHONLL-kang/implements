@@ -26,9 +26,19 @@ class CategoricalCrossEntropy:
     def backward(self, true, pred):
         return -tf.math.divide(true, pred+EPSILON)
 
+class MeanAbsoluteError:
+    def forward(self, true, pred):
+        error = pred - true
+        return tf.math.reduce_mean(error * tf.math.sign(error))
+
+    def backward(self, true, pred):
+        error = pred - true
+        return tf.math.sign(error)
+
 def function(name):
     function_map = {'mse' : MeanSquaredError, 'meansquarederror' : MeanSquaredError,
                     'bce' : BinaryCrossEntropy, 'binarycrossentropy' : BinaryCrossEntropy,
-                    'cce' : CategoricalCrossEntropy, 'categoricalcrossentropy' : CategoricalCrossEntropy}
+                    'cce' : CategoricalCrossEntropy, 'categoricalcrossentropy' : CategoricalCrossEntropy,
+                    'mae' : MeanAbsoluteError, 'meanabsoluteerror' : MeanAbsoluteError}
 
     return function_map[name.lower()]()
