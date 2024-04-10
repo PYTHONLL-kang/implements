@@ -56,7 +56,7 @@ class Neural_network:
     def print_expression(self, value):
         return f'{value:.4f}' if value > 0.0001 else f'{value:.4e}'
 
-    def fit(self, x, y, batch_size, epochs, verbose, **kwargs):
+    def fit(self, x, y, batch_size, epochs, **kwargs):
         verbose = kwargs.get("verbose", 1)
         validation_data = kwargs.get("validation_data")
 
