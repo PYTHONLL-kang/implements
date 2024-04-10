@@ -20,8 +20,6 @@ class Dense(Layers.Base):
         return output
 
     def backward(self, gradients, inputs, outputs):
-        gradients = self.process_gradients(gradients)
-
         weight_gradients = tf.matmul(tf.transpose(inputs), gradients)
         self.weight.assign(self.weight_optimizer.update(self.weight, weight_gradients))
 
@@ -60,7 +58,6 @@ class Convolution2D(Layers.Base, Layers.Image):
         return output
 
     def backward(self, gradients, inputs, outputs):
-        gradients = self.process_gradients(gradients)
         col_gradients = tf.reshape(gradients, (-1, self.filters))
 
         weight_gradients = tf.reshape(tf.matmul(tf.transpose(self.col), col_gradients), self.weight_shape)

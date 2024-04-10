@@ -18,15 +18,6 @@ class Base:
             self.bias = tf.Variable(tf.random.normal(shape=(1, self.weight_shape[-1]), mean=0, stddev=0.01, dtype=tf.float32))
             self.bias_optimizer = copy.deepcopy(optimizer)
 
-    def process_gradients(self, gradients):
-        flat_gradients = np.reshape(gradients, (-1))
-
-        if self.dropout_rate:
-            zero_index = np.random.randint(flat_gradients.shape, size=int(flat_gradients.shape[0]*self.dropout_rate))
-            flat_gradients[zero_index] = 0
-
-        return np.reshape(flat_gradients, gradients.shape)
-
 class Image:
     def __init__(self, **kwargs):
         self.pad = self.set_padding(kwargs.get('padding', 'valid'))
