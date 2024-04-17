@@ -1,5 +1,4 @@
 import tensorflow as tf
-import numpy as np
 import copy
 import k.Initializers.functions as Initializers
 
@@ -33,35 +32,35 @@ class Image:
                 padding_height = self.strides[0] * (self.input_shape[0] - 1) - self.input_shape[0] + self.kernel_shape[0]
                 padding_width = self.strides[1] * (self.input_shape[1] - 1) - self.input_shape[1] + self.kernel_shape[1]
 
-                return (padding_height, padding_width)
+                return [[0, 0], [padding_height, padding_height], [padding_width, padding_width], [3, 0]]
 
             if padding == 'valid':
-                return (0, 0)
+                return [[0, 0], [0, 0], [0, 0], [0, 0]]
 
         else:
             raise ValueError("padding is not valid parameter")
 
     def set_imgshape(self, height, width):
-        out_h = (height + 2 * self.pad[0] - self.kernel_shape[0]) // self.strides[0] + 1
-        out_w = (width + 2 * self.pad[1] - self.kernel_shape[1]) // self.strides[1] + 1
-        img_h = height + 2 * self.pad[0] + self.strides[0] -1
-        img_w = width + 2 * self.pad[1] + self.strides[1] -1
+        out_h = (height + 2 * self.pad[2][1] - self.kernel_shape[0]) // self.strides[0] + 1
+        out_w = (width + 2 * self.pad[3][1] - self.kernel_shape[1]) // self.strides[1] + 1
+        img_h = height + 2 * self.pad[2][1] + self.strides[0] -1
+        img_w = width + 2 * self.pad[3][1] + self.strides[1] -1
 
         return out_h, out_w, img_h, img_w
 
     def im2col(self, data):
         num, height, width, channel = data.shape
         out_h, out_w, _, _ = self.set_imgshape(height, width)
-        data = np.pad(data, self.pad, constant_values=self.pad_value).transpose(0, 3, 1, 2)
-        col = np.zeros((num, channel, self.kernel_shape[0], self.kernel_shape[1], out_h, out_w), dtype=np.float32)
+        data = tf.cast(tf.transpose(tf.pad(data, self.pad, mode='CONSTANT', constant_values=self.pad_value), (0, 3, 1, 2)), dtype=tf.float32)
+        col = tf.Variable(tf.zeros((num, channel, self.kernel_shape[0], self.kernel_shape[1], out_h, out_w), dtype=tf.float32))
 
         for y in range(self.kernel_shape[0]):
             y_max = y + self.strides[0] * out_h
             for x in range(self.kernel_shape[1]):
                 x_max = x + self.strides[1] * out_w
-                col[:, :, y, x, :, :] = data[:, :, y:y_max:self.strides[0], x:x_max:self.strides[1]]
+                col[:, :, y, x, :, :].assign(data[:, :, y:y_max:self.strides[0], x:x_max:self.strides[1]])
 
-        col = col.transpose(0, 4, 5, 1, 2, 3).reshape(num * out_h * out_w, -1)
+        col = tf.reshape(tf.transpose(col, (0, 4, 5, 1, 2, 3)), shape=(num * out_h * out_w, -1))
         return col, num, out_h, out_w
 
     def col2im(self, col, data):
@@ -69,12 +68,12 @@ class Image:
         out_h, out_w, img_h, img_w = self.set_imgshape(height, width)
         col = tf.transpose(tf.reshape(col, (num, out_h, out_w, channel, self.kernel_shape[0], self.kernel_shape[1])), (0, 3, 4, 5, 1, 2))
 
-        img = np.zeros((num, channel, img_h, img_w))
+        img = tf.Variable(tf.zeros((num, channel, img_h, img_w)))
 
         for y in range(self.kernel_shape[0]):
             y_max = y + self.strides[0] * out_h
             for x in range(self.kernel_shape[1]):
                 x_max = x + self.strides[1] * out_w
-                img[:, :, y:y_max:self.strides[0], x:x_max:self.strides[1]] = col[:, :, y, x, :, :]
+                img[:, :, y:y_max:self.strides[0], x:x_max:self.strides[1]].assign(col[:, :, y, x, :, :])
 
-        return img.transpose(0, 2, 3, 1)
+        return tf.transpose(img, (0, 2, 3, 1))
