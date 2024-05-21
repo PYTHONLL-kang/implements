@@ -2,6 +2,10 @@ import tensorflow as tf
 import k.Layers.base_functions as Layers
 import k.Activations.functions as Activations
 
+class Input():
+    def __init__(self, input_shape):
+        self.output_shape = input_shape
+
 class Dense(Layers.Base):
     def __init__(self, output_shape, **kwargs):
         self.input_shape = kwargs.get('input_shape')
