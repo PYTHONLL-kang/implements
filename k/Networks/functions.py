@@ -47,9 +47,8 @@ class Neural_network:
         loss = self.loss.forward(y, pred)
         graph_dict['loss'] = loss
 
-        metrics = kwargs.get("metrics")
-        if metrics is not None:
-            graph_dict['metrics'] = self.to_object(metrics, Losses.function).forward(y, pred)
+        if self.metrics is not None:
+            graph_dict['metrics'] = self.metrics.forward(y, pred)
 
         return graph_dict
 

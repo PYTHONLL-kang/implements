@@ -29,10 +29,10 @@ $\frac{\partial \hat y}{\partial w1} = \sigma (g(w,x))$
 
 - $w2 := w2 - \alpha \cdot \frac{\partial J}{\partial w2}$
 
-$\frac{\partial J}{\partial w2} = \frac{\partial J}{\partial \hat y} \cdot \frac{\partial \hat y}{\partial \sigma} \cdot \frac{\partial \sigma}{\partial w2}$
+$\frac{\partial J}{\partial w2} = \frac{\partial J}{\partial \hat y} \cdot \frac{\partial \hat y}{\partial \sigma} \cdot \frac{\partial \sigma}{\partial g} \cdot \frac{\partial g}{\partial w2}$
 
 $\frac{\partial \hat y}{\partial \sigma} = w1 \cdot \frac{\partial \sigma}{\partial g}$
 
 $\frac{\partial \sigma}{\partial g} = \sigma (g(w2,x)) \cdot (1-\sigma (g(w2, x)))$
 
-$\frac{\partial \sigma}{\partial g} = x$
+$\frac{\partial g}{\partial w} = x$

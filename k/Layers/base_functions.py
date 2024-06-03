@@ -4,9 +4,8 @@ import k.Initializers.functions as Initializers
 
 class Base:
     def __init__(self, **kwargs):
-        self.initializer = kwargs.get('initializer', 'he')
-        self.dropout_rate = kwargs.get('dropout', 0.0)
-        self.use_bias = kwargs.get('use_bias', True)
+        self.initializer = kwargs.get('initializer', 'glorot')
+        self.use_bias = kwargs.get('use_bias', False)
 
     def set_vars(self, optimizer):
         weight_stddev = Initializers.function(self.initializer, self.weight_shape)

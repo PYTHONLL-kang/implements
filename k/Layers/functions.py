@@ -6,6 +6,15 @@ class Input():
     def __init__(self, input_shape):
         self.output_shape = input_shape
 
+    def set_shape(self):
+        self.weight_shape = [self.input_shape, self.output_shape]
+
+    def forward(self, data):
+        return data
+    
+    def backward(self, gradients, inputs, outputs):
+        return gradients
+
 class Dense(Layers.Base):
     def __init__(self, output_shape, **kwargs):
         self.input_shape = kwargs.get('input_shape')
